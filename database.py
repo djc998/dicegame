@@ -150,6 +150,13 @@ async def get_active_game(group_id: int):
             row = await cursor.fetchone()
             return dict(row) if row else None
 
+async def get_all_active_games() -> list[dict]:
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        async with db.execute('SELECT * FROM games WHERE is_active = 1') as cursor:
+            rows = await cursor.fetchall()
+            return [dict(row) for row in rows]
+
 async def end_game(game_id: int):
     async with aiosqlite.connect(DB_PATH) as db:
         await db.execute('UPDATE games SET is_active = 0 WHERE game_id = ?', (game_id,))

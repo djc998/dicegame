@@ -4,7 +4,8 @@ from dotenv import load_dotenv
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, MessageHandler, PreCheckoutQueryHandler, filters
 import database
 import handlers
-import settings_handler
+from datetime import datetime
+from game_logic import end_game_job, one_minute_warning_job
 
 # Setup logging
 logging.basicConfig(
@@ -16,6 +17,47 @@ logger = logging.getLogger(__name__)
 async def post_init(application):
     logger.info("Initializing database...")
     await database.init_db()
+    
+    logger.info("Restoring active game timers...")
+    active_games = await database.get_all_active_games()
+    now = datetime.now()
+    restored = 0
+    for game in active_games:
+        try:
+            end_time = datetime.fromisoformat(game['end_time'])
+            remaining = (end_time - now).total_seconds()
+            
+            if remaining <= 0:
+                # Game should have already ended, end it immediately
+                application.job_queue.run_once(
+                    end_game_job,
+                    when=1,
+                    chat_id=game['group_id'],
+                    data={'game_id': game['game_id']},
+                    name=f"end_game_{game['game_id']}"
+                )
+            else:
+                # Schedule end game
+                application.job_queue.run_once(
+                    end_game_job,
+                    when=remaining,
+                    chat_id=game['group_id'],
+                    data={'game_id': game['game_id']},
+                    name=f"end_game_{game['game_id']}"
+                )
+                # Schedule 1 minute warning if > 1 min remaining
+                if remaining > 60:
+                    application.job_queue.run_once(
+                        one_minute_warning_job,
+                        when=remaining - 60,
+                        chat_id=game['group_id'],
+                        name=f"warn_game_{game['game_id']}"
+                    )
+            restored += 1
+        except Exception as e:
+            logger.error(f"Failed to restore timer for game {game['game_id']}: {e}")
+            
+    logger.info(f"Restored {restored} active game timers.")
 
 def main():
     load_dotenv()
