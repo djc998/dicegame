@@ -82,7 +82,6 @@ async def init_db():
             )
         ''')
 
-        await db.execute('DROP TABLE IF EXISTS dice_faces')
         await db.execute('''
             CREATE TABLE IF NOT EXISTS dice_faces (
                 face_id INTEGER PRIMARY KEY AUTOINCREMENT,
