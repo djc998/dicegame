@@ -1,4 +1,4 @@
-# Kinky Dice Game Bot 🎲
+# Dice Game Bot 🎲
 
 A powerful, feature-rich Telegram Bot designed to facilitate a customizable dice game for groups. The bot allows users to roll a combination of an "Action" and a "Subject", and then reply with photo/video/audio/text submissions based on the roll. Other users can then rate these submissions out of 10.
 
