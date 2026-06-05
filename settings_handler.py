@@ -205,5 +205,6 @@ def get_settings_handler():
             WAITING_FOR_INPUT: [MessageHandler(filters.TEXT & ~filters.COMMAND, input_received)],
             WAITING_FOR_BULK_INPUT: [MessageHandler(filters.TEXT & ~filters.COMMAND, bulk_input_received)]
         },
-        fallbacks=[CommandHandler('cancel', cancel)]
+        fallbacks=[CommandHandler('cancel', cancel)],
+        allow_reentry=True
     )
